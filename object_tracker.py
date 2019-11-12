@@ -1,8 +1,3 @@
-# USAGE
-# python opencv_object_tracking.py
-# python opencv_object_tracking.py --video dashcam_boston.mp4 --tracker csrt
-
-# import the necessary packages
 from imutils.video import VideoStream
 from imutils.video import FPS
 import argparse
@@ -10,11 +5,13 @@ import imutils
 import time
 import cv2
 
-# construct the argument parser and parse the arguments
+
 ap = argparse.ArgumentParser()
 ap.add_argument("-v", "--video", type=str,
                 help="path to input video file")
 ap.add_argument("-t", "--tracker", type=str, default="kcf",
+                help="OpenCV object tracker type")
+ap.add_argument("-s", "--slow", type=str, default=0,
                 help="OpenCV object tracker type")
 args = vars(ap.parse_args())
 
@@ -63,15 +60,34 @@ else:
 fps = None
 
 # loop over frames from the video stream
-while True:
-    # grab the current frame, then handle if we are using a
-    # VideoStream or VideoCapture object
-    frame = vs.read()
-    frame = frame[1] if args.get("video", False) else frame
+isRecording = True
+sleepTime = int(args["slow"])
 
+
+def displayFrame(flag="next"):
+    ret = None
+    frame = None
+    if flag == "next":
+        ret, frame = vs.read()
+
+    if flag == "prev":
+        next_frame = vs.get(cv2.CAP_PROP_POS_FRAMES)
+        current_frame = next_frame - 1
+        previous_frame = current_frame - 1
+        vs.set(cv2.CAP_PROP_POS_FRAMES, previous_frame)
+        ret, frame = vs.read()
+
+    if flag == "cur":
+        next_frame = vs.get(cv2.CAP_PROP_POS_FRAMES)
+        current_frame = next_frame - 1
+        vs.set(cv2.CAP_PROP_POS_FRAMES, current_frame)
+        ret, frame = vs.read()
+
+    if not ret:
+        return None
     # check to see if we have reached the end of the stream
     if frame is None:
-        break
+        return None
 
     # resize the frame (so we can process it faster) and grab the
     # frame dimensions
@@ -99,6 +115,7 @@ while True:
             ("Tracker", args["tracker"]),
             ("Success", "Yes" if success else "No"),
             ("FPS", "{:.2f}".format(fps.fps())),
+            ("Cords", "("+str(x)+","+str(y)+")")
         ]
 
         # loop over the info tuples and draw them on our frame
@@ -108,15 +125,25 @@ while True:
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
     # show the output frame
-    cv2.imshow("Frame", frame)
+    cv2.imshow("frame", frame)
+    return frame
+
+
+while True:
+    # grab the current frame, then handle if we are using a
+    # VideoStream or VideoCapture object
+    frame = displayFrame()
+    if frame is None:
+        break
+
     key = cv2.waitKey(1) & 0xFF
 
     # if the 's' key is selected, we are going to "select" a bounding
     # box to track
     if key == ord("s"):
-        # select the bounding box of the object we want to track (make
-        # sure you press ENTER or SPACE after selecting the ROI)
-        initBB = cv2.selectROI("Frame", frame, fromCenter=False,
+            # select the bounding box of the object we want to track (make
+            # sure you press ENTER or SPACE after selecting the ROI)
+        initBB = cv2.selectROI("frame", frame, fromCenter=False,
                                showCrosshair=True)
 
         # start OpenCV object tracker using the supplied bounding box
@@ -124,9 +151,38 @@ while True:
         tracker.init(frame, initBB)
         fps = FPS().start()
 
-    # if the `q` key was pressed, break from the loop
+    elif key == ord("x"):
+        while True:
+            key2 = cv2.waitKey(1) or 0xff
+            cv2.imshow('frame', frame)
+            if key2 == ord('x'):
+                break
+            elif key2 == ord("n"):
+                frame = displayFrame()
+
+            elif key2 == ord("p"):
+                frame = displayFrame("prev")
+
+            elif key2 == ord("s"):
+                        # select the bounding box of the object we want to track (make
+                    # sure you press ENTER or SPACE after selecting the ROI)
+                initBB = cv2.selectROI("frame", frame, fromCenter=False,
+                                       showCrosshair=True)
+
+                # start OpenCV object tracker using the supplied bounding box
+                # coordinates, then start the FPS throughput estimator as well
+                tracker.init(frame, initBB)
+                fps = FPS().start()
+                frame = displayFrame("cur")
+
+            elif key2 == ord("q"):
+                exit()
+
+        # if the `q` key was pressed, break from the loop
     elif key == ord("q"):
         break
+
+    time.sleep(sleepTime)
 
 # if we are using a webcam, release the pointer
 if not args.get("video", False):

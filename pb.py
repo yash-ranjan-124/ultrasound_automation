@@ -5,71 +5,21 @@ from imutils.video import FPS
 import imutils
 import time
 from PyQt5 import QtGui, QtCore, QtWidgets
+from PyQt5.QtGui import QImage
+from PyQt5.QtWidgets import QRubberBand, QLabel, QWidget
+from PyQt5.QtCore import QRect, QPoint, QSize
 import cv2
 
 
-class Tracker():
-    def __init__(self, tracker_type, frame):
-        OPENCV_OBJECT_TRACKERS = {
-            "csrt": cv2.TrackerCSRT_create,
-            "kcf": cv2.TrackerKCF_create,
-            "boosting": cv2.TrackerBoosting_create,
-            "mil": cv2.TrackerMIL_create,
-            "tld": cv2.TrackerTLD_create,
-            "medianflow": cv2.TrackerMedianFlow_create,
-            "mosse": cv2.TrackerMOSSE_create
-        }
-        self.frame = frame
-        self.tracker_type = tracker_type
-        self.tracker = OPENCV_OBJECT_TRACKERS[tracker_type]()
-        self.initBB = None
-
-    def track(self):
-        frame = imutils.resize(self.frame, width=500)
-        (H, W) = frame.shape[:2]
-
-        if self.initBB is not None:
-            # grab the new bounding box coordinates of the object
-            (success, box) = self.tracker.update(frame)
-
-            # check to see if the tracking was a success
-            if success:
-                (x, y, w, h) = [int(v) for v in box]
-                cv2.rectangle(frame, (x, y), (x + w, y + h),
-                              (0, 255, 0), 2)
-
-            # update the FPS counter
-            self.fps.update()
-            self.fps.stop()
-
-            # initialize the set of information we'll be displaying on
-            # the frame
-            info = [
-                ("Tracker",  self.tracker_type),
-                ("Success", "Yes" if success else "No"),
-                ("FPS", "{:.2f}".format(self.fps.fps())),
-            ]
-            # loop over the info tuples and draw them on our frame
-            for (i, (k, v)) in enumerate(info):
-                text = "{}: {}".format(k, v)
-                cv2.putText(frame, text, (10, H - ((i * 20) + 20)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-
-            return frame
-
-        key = cv2.waitKey(1) & 0xFF
-        # if the 's' key is selected, we are going to "select" a bounding
-        # box to track
-        if key == ord("s"):
-            # select the bounding box of the object we want to track (make
-            # sure you press ENTER or SPACE after selecting the ROI)
-            initBB = cv2.selectROI("Frame", frame, fromCenter=False,
-                                   showCrosshair=True)
-
-            # start OpenCV object tracker using the supplied bounding box
-            # coordinates, then start the FPS throughput estimator as well
-            self.tracker.init(frame, self.initBB)
-            self.fps = FPS().start()
+OPENCV_OBJECT_TRACKERS = {
+    "csrt": cv2.TrackerCSRT_create,
+    "kcf": cv2.TrackerKCF_create,
+    "boosting": cv2.TrackerBoosting_create,
+    "mil": cv2.TrackerMIL_create,
+    "tld": cv2.TrackerTLD_create,
+    "medianflow": cv2.TrackerMedianFlow_create,
+    "mosse": cv2.TrackerMOSSE_create
+}
 
 
 class VideoCapture(QtWidgets.QWidget):
@@ -78,26 +28,69 @@ class VideoCapture(QtWidgets.QWidget):
         self.cap = cv2.VideoCapture(str(filename))
         self.video_frame = QtWidgets.QLabel()
         parent.layout.addWidget(self.video_frame)
-        self.cur_frame = None
+        self.ret, self.cur_frame = self.cap.read()
         self.fps = None
+        self.initBB = None
+        self.tracker_type = "csrt"
+        self.tracker = OPENCV_OBJECT_TRACKERS[self.tracker_type]()
+        self.displayFrame()
+        self.timer = None
 
     def nextFrameSlot(self):
         print("next frame")
         ret, frame = self.cap.read()
-        frame = frame
-        Tracker("csrt", frame).track()
 
         self.cur_frame = frame
-
-        img = QtGui.QImage(
-            self.cur_frame, self.cur_frame.shape[1], self.cur_frame.shape[0], QtGui.QImage.Format_RGB888)
-        pix = QtGui.QPixmap.fromImage(img)
-        self.video_frame.setPixmap(pix)
+        self.displayFrame()
 
     def prevFrameSlot(self):
         print("prev frame")
-        if self.cur_frame == None:
+        if len(self.cur_frame) < 1:
             return
+        pos_frame = self.cap.get(cv2.CAP_PROP_POS_FRAMES)
+        self.cap.set(cv2.CAP_PROP_POS_FRAMES, pos_frame-1)
+        self.ret, self.cur_frame = self.cap.read()
+        self.displayFrame()
+
+    def displayFrame(self):
+        self.cur_frame = imutils.resize(self.cur_frame, width=500)
+        (H, W) = self.cur_frame.shape[:2]
+        # check to see if we are currently tracking an object
+        if self.initBB is not None:
+                # grab the new bounding box coordinates of the object
+            (success, box) = self.tracker.update(self.cur_frame)
+
+            # check to see if the tracking was a success
+            if success:
+                (x, y, w, h) = [int(v) for v in box]
+                cv2.rectangle(self.cur_frame, (x, y), (x + w, y + h),
+                              (0, 255, 0), 2)
+
+                # update the FPS counter
+                self.fps.update()
+                self.fps.stop()
+
+                # initialize the set of information we'll be displaying on
+                # the frame
+                info = [
+                    ("Tracker", self.tracker_type),
+                    ("Success", "Yes" if success else "No"),
+                    ("FPS", "{:.2f}".format(self.fps.fps())),
+                    ("Cords", "("+str(x)+","+str(y)+")")
+                ]
+        else:
+            info = [
+                ("Tracker", self.tracker_type),
+                ("Success",  "No"),
+                ("FPS", 0),
+                ("Cords", "N/A")
+            ]
+
+        for (i, (k, v)) in enumerate(info):
+            text = "{}: {}".format(k, v)
+            cv2.putText(self.cur_frame, text, (10, H - ((i * 20) + 20)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+
         img = QtGui.QImage(
             self.cur_frame, self.cur_frame.shape[1], self.cur_frame.shape[0], QtGui.QImage.Format_RGB888)
         pix = QtGui.QPixmap.fromImage(img)
@@ -115,6 +108,53 @@ class VideoCapture(QtWidgets.QWidget):
         self.cap.release()
         super(QtGui.QWidget, self).deleteLater()
 
+    def selectCords(self):
+        if self.timer and len(self.cur_frame) > 0:
+            self.pause()
+            self.rubberband = QRubberBand(QRubberBand.Rectangle, self)
+            self.video_frame.mousePressEvent = self.mousePressEvent
+            self.video_frame.mouseMoveEvent = self.mouseMoveEvent
+            self.video_frame.mouseReleaseEvent = self.mouseReleaseEvent
+            self.video_frame.setMouseTracking(True)
+            print("init bb")
+            print(self.initBB)
+
+        # # start OpenCV object tracker using the supplied bounding box
+        #     # coordinates, then start the FPS throughput estimator as well
+        #     self.tracker.init(self.cur_frame, self.initBB)
+        #     self.fps = FPS().start()
+    def mousePressEvent(self, event):
+        self.origin = event.pos()
+        self.rubberband.setGeometry(
+            QtCore.QRect(self.origin, QtCore.QSize()))
+        self.rubberband.show()
+        QWidget.mousePressEvent(self, event)
+
+    def mouseMoveEvent(self, event):
+        if self.rubberband.isVisible():
+            self.rubberband.setGeometry(
+                QtCore.QRect(self.origin, event.pos()).normalized())
+        QWidget.mouseMoveEvent(self, event)
+
+    def mouseReleaseEvent(self, event):
+        if self.rubberband.isVisible():
+            self.rubberband.hide()
+            selected = []
+            rect = self.rubberband.geometry()
+            for child in self.findChildren(QtGui.QPushButton):
+                if rect.intersects(child.geometry()):
+                    selected.append(child)
+            print('Selection Contains:\n '),
+            if selected:
+                print('  '.join(
+                    'Button: %s\n' % child.text() for child in selected))
+            else:
+                print(' Nothing\n')
+        QWidget.mouseReleaseEvent(self, event)
+        # self.tracker.init(self.cur_frame, self.initBB)
+        self.fps = FPS().start()
+        self.start()
+
 
 class VideoDisplayWidget(QtWidgets.QWidget):
     def __init__(self, parent):
@@ -131,13 +171,13 @@ class VideoDisplayWidget(QtWidgets.QWidget):
 
         self.prevButton = QtWidgets.QPushButton('Prev Frame', parent)
 
-        self.getCords_btn = QtWidgets.QPushButton('Get Cordinates', parent)
+        self.selectCordsButton = QtWidgets.QPushButton('Select Cords', parent)
 
         self.layout.addWidget(self.startButton)
         self.layout.addWidget(self.pauseButton)
         self.layout.addWidget(self.nextButton)
         self.layout.addWidget(self.prevButton)
-        self.layout.addWidget(self.getCords_btn)
+        self.layout.addWidget(self.selectCordsButton)
 
         self.setLayout(self.layout)
 
@@ -179,16 +219,8 @@ class ControlWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.videoDisplayWidget)
 
     def startCapture(self):
-        if not self.capture and self.isVideoFileLoaded:
-            self.capture = VideoCapture(
-                self.videoFileName, self.videoDisplayWidget)
-            self.videoDisplayWidget.pauseButton.clicked.connect(
-                lambda: self.capture.pause())
-            self.videoDisplayWidget.nextButton.clicked.connect(
-                lambda: self.capture.nextFrameSlot())
-            self.videoDisplayWidget.prevButton.clicked.connect(
-                lambda: self.capture.prevFrameSlot())
-        self.capture.start()
+        if self.capture and self.isVideoFileLoaded:
+            self.capture.start()
 
     def endCapture(self):
         self.capture.deleteLater()
@@ -199,8 +231,20 @@ class ControlWindow(QtWidgets.QMainWindow):
             self.videoFileName = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file',
                                                                        '/Users/yashasvi.ranjan/ultra', "Video files (*.mp4 *.mpgev)")[0]
             self.isVideoFileLoaded = True
+            if not self.capture and self.isVideoFileLoaded:
+                self.capture = VideoCapture(
+                    self.videoFileName, self.videoDisplayWidget)
+                self.videoDisplayWidget.pauseButton.clicked.connect(
+                    lambda: self.capture.pause())
+                self.videoDisplayWidget.nextButton.clicked.connect(
+                    lambda: self.capture.nextFrameSlot())
+                self.videoDisplayWidget.prevButton.clicked.connect(
+                    lambda: self.capture.prevFrameSlot())
+                self.videoDisplayWidget.selectCordsButton.clicked.connect(
+                    lambda: self.capture.selectCords())
+
         except:
-            print("Please select a .h264 file")
+            print("Please select a video file")
 
     def closeApplication(self):
         choice = QtWidgets.QMessageBox.question(

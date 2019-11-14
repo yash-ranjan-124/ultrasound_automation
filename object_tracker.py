@@ -184,6 +184,12 @@ while True:
     elif key == ord("q"):
         break
 
+    elif key == ord("d"):
+        sleepTime = sleepTime - 1 if sleepTime > 0 else sleepTime
+
+    elif key == ord("i"):
+        sleepTime = sleepTime + 1
+
     time.sleep(sleepTime)
 
 # if we are using a webcam, release the pointer

@@ -1,5 +1,6 @@
 from imutils.video import VideoStream
 from imutils.video import FPS
+import logging
 import argparse
 import imutils
 import time
@@ -44,6 +45,18 @@ else:
 
 # initialize the bounding box coordinates of the object we are going
 # to track
+
+tracker_list = ["csrt", "kcf", "boosting", "mil", "tld", "medianflow", "mosse"]
+
+
+def getTrackerPos(tracker):
+    for i in range(0, len(tracker_list)):
+        if OPENCV_OBJECT_TRACKERS[args["tracker"]]:
+            return i
+
+
+tracker_pos = getTrackerPos(args["tracker"])
+tracker_name = args["tracker"]
 initBB = None
 
 # if a video path was not supplied, grab the reference to the web cam
@@ -62,6 +75,20 @@ fps = None
 # loop over frames from the video stream
 isRecording = True
 sleepTime = int(args["slow"])
+
+
+logging.basicConfig(filename="log.txt", filemode='a',
+                    format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S', level=logging.DEBUG)
+
+logging.info("Logger running..!!")
+
+
+def logFramesData(data={}):
+    if data is None:
+        return
+    else:
+        logging.info("cords=(x="+str(data["cords"]["x"])+",y=" + str(
+            data["cords"]["y"]) + ") fps=" + str(data["fps"]) + " tracker=" + str(data["tracker"]))
 
 
 def displayFrame(flag="next"):
@@ -112,7 +139,7 @@ def displayFrame(flag="next"):
         # initialize the set of information we'll be displaying on
         # the frame
         info = [
-            ("Tracker", args["tracker"]),
+            ("Tracker", tracker_name),
             ("Success", "Yes" if success else "No"),
             ("FPS", "{:.2f}".format(fps.fps())),
             ("Cords", "("+str(x)+","+str(y)+")")
@@ -123,6 +150,15 @@ def displayFrame(flag="next"):
             text = "{}: {}".format(k, v)
             cv2.putText(frame, text, (10, H - ((i * 20) + 20)),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+
+        logFramesData({
+            "cords": {
+                "x": x,
+                "y": y
+            },
+            "fps": "{:.2f}".format(fps.fps()),
+            "tracker": args["tracker"]
+        })
 
     # show the output frame
     cv2.imshow("frame", frame)
@@ -180,6 +216,32 @@ while True:
             elif key2 == ord("q"):
                 exit()
 
+            elif key2 == ord("t"):
+                i = tracker_pos
+                if i < len(tracker_list) - 1:
+                    temp_pos = i + 1
+                    tracker = OPENCV_OBJECT_TRACKERS[tracker_list[temp_pos]]()
+                    tracker_pos = temp_pos
+                    tracker_name = tracker_list[tracker_pos]
+                    initBB = cv2.selectROI("frame", frame, fromCenter=False,
+                                           showCrosshair=True)
+                    tracker.init(frame, initBB)
+                    fps = FPS().start()
+                    frame = displayFrame("cur")
+
+            elif key2 == ord("y"):
+                i = tracker_pos
+                if i > 0:
+                    temp_pos = i - 1
+                    tracker = OPENCV_OBJECT_TRACKERS[tracker_list[temp_pos]]()
+                    tracker_pos = temp_pos
+                    tracker_name = tracker_list[tracker_pos]
+                    initBB = cv2.selectROI("frame", frame, fromCenter=False,
+                                           showCrosshair=True)
+                    tracker.init(frame, initBB)
+                    fps = FPS().start()
+                    frame = displayFrame("cur")
+
         # if the `q` key was pressed, break from the loop
     elif key == ord("q"):
         break
@@ -189,6 +251,32 @@ while True:
 
     elif key == ord("i"):
         sleepTime = sleepTime + 1
+
+    elif key == ord("t"):
+        i = tracker_pos
+        if i < len(tracker_list) - 1:
+            temp_pos = i + 1
+            tracker = OPENCV_OBJECT_TRACKERS[tracker_list[temp_pos]]()
+            tracker_pos = temp_pos
+            tracker_name = tracker_list[tracker_pos]
+            initBB = cv2.selectROI("frame", frame, fromCenter=False,
+                                   showCrosshair=True)
+            tracker.init(frame, initBB)
+            fps = FPS().start()
+            frame = displayFrame("cur")
+
+    elif key == ord("y"):
+        i = tracker_pos
+        if i > 0:
+            temp_pos = i - 1
+            tracker = OPENCV_OBJECT_TRACKERS[tracker_list[temp_pos]]()
+            tracker_pos = temp_pos
+            tracker_name = tracker_list[tracker_pos]
+            initBB = cv2.selectROI("frame", frame, fromCenter=False,
+                                   showCrosshair=True)
+            tracker.init(frame, initBB)
+            fps = FPS().start()
+            frame = displayFrame("cur")
 
     time.sleep(sleepTime)
 

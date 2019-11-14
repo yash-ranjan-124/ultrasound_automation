@@ -6,6 +6,6 @@
 
 > python object_tracker.py --video [path/to/video] --tracker [tracker type example:csrt] --slow [time in sec to slow down video]<br>
 
-**example command:**<br>
+**Example Command ->**<br>
 
 > python object_tracker.py --video us_bp.mp4 --tracker csrt --slow 1

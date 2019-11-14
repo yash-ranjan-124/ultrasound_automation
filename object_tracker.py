@@ -154,6 +154,8 @@ while True:
     elif key == ord("x"):
         while True:
             key2 = cv2.waitKey(1) or 0xff
+            if frame is None:
+                exit()
             cv2.imshow('frame', frame)
             if key2 == ord('x'):
                 break

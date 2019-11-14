@@ -7,6 +7,7 @@ keys-><br>
 4)q-> quit <br>
 5)c-> cancel selector<br>
 6)enter or space -> play video after selection<br>
+7)x-> pause video<br>
 
 command python object_tracker.py --video [path/to/video] --tracker [tracker type example:csrt] --slow [time in sec to slow down video]<br>
 

@@ -1,6 +1,6 @@
 # ultrasound_automation
 
-**Keys->**<br> 1)**s** -> region of intrest selector<br> 2)**n**-> next frame (first pause then use)<br> 3)**p**-> prev frame (first pause then use)<br> 4)**q**-> quit <br> 5)**c**-> cancel selector<br> 6)**enter or space** -> play video after selection<br> 7)**x**-> pause video<br> 8)**i**->increament video play back speed by 1 sec<br> 9)**d**->decreament video play back speed by 1 sec<br>
+**Keys->**<br> 1)**s** -> region of intrest selector<br> 2)**n**-> next frame (first pause then use)<br> 3)**p**-> prev frame (first pause then use)<br> 4)**q**-> quit <br> 5)**c**-> cancel selector<br> 6)**enter or space** -> play video after selection<br> 7)**x**-> pause video<br> 8)**i**->increament video play back speed by 1 sec<br> 9)**d**->decreament video play back speed by 1 sec<br> 10)**t**-> next tracker algo selector<br>11)**y**-> previous tracker algo selector<br>
 
 **Command to Run app ->** <br>
 

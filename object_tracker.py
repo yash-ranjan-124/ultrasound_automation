@@ -132,33 +132,33 @@ def displayFrame(flag="next"):
             cv2.rectangle(frame, (x, y), (x + w, y + h),
                           (0, 255, 0), 2)
 
-        # update the FPS counter
-        fps.update()
-        fps.stop()
+            # update the FPS counter
+            fps.update()
+            fps.stop()
 
-        # initialize the set of information we'll be displaying on
-        # the frame
-        info = [
-            ("Tracker", tracker_name),
-            ("Success", "Yes" if success else "No"),
-            ("FPS", "{:.2f}".format(fps.fps())),
-            ("Cords", "("+str(x)+","+str(y)+")")
-        ]
+            # initialize the set of information we'll be displaying on
+            # the frame
+            info = [
+                ("Tracker", tracker_name),
+                ("Success", "Yes" if success else "No"),
+                ("FPS", "{:.2f}".format(fps.fps())),
+                ("Cords", "("+str(x)+","+str(y)+")")
+            ]
 
-        # loop over the info tuples and draw them on our frame
-        for (i, (k, v)) in enumerate(info):
-            text = "{}: {}".format(k, v)
-            cv2.putText(frame, text, (10, H - ((i * 20) + 20)),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+            # loop over the info tuples and draw them on our frame
+            for (i, (k, v)) in enumerate(info):
+                text = "{}: {}".format(k, v)
+                cv2.putText(frame, text, (10, H - ((i * 20) + 20)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
-        logFramesData({
-            "cords": {
-                "x": x,
-                "y": y
-            },
-            "fps": "{:.2f}".format(fps.fps()),
-            "tracker": args["tracker"]
-        })
+            logFramesData({
+                "cords": {
+                    "x": x,
+                    "y": y
+                },
+                "fps": "{:.2f}".format(fps.fps()),
+                "tracker": tracker_name
+            })
 
     # show the output frame
     cv2.imshow("frame", frame)

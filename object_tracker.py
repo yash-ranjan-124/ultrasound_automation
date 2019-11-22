@@ -87,11 +87,15 @@ def logFramesData(data={}):
     if data is None:
         return
     else:
-        logging.info("cords=(x="+str(data["cords"]["x"])+",y=" + str(
+        userFlagStr = ""
+        if data["user"] == 1:
+            userFlagStr = " -u "
+        print("user flag"+userFlagStr)
+        logging.info("Frame#"+str(data['frameNo']) + userFlagStr + "cords=(x="+str(data["cords"]["x"])+",y=" + str(
             data["cords"]["y"]) + ") fps=" + str(data["fps"]) + " tracker=" + str(data["tracker"]))
 
 
-def displayFrame(flag="next"):
+def displayFrame(flag="next", user=False):
     ret = None
     frame = None
     if flag == "next":
@@ -157,7 +161,9 @@ def displayFrame(flag="next"):
                     "y": y
                 },
                 "fps": "{:.2f}".format(fps.fps()),
-                "tracker": tracker_name
+                "tracker": tracker_name,
+                "frameNo": vs.get(cv2.CAP_PROP_POS_FRAMES) - 1,
+                "user": 1 if user else 0
             })
 
     # show the output frame
@@ -186,6 +192,7 @@ while True:
         # coordinates, then start the FPS throughput estimator as well
         tracker.init(frame, initBB)
         fps = FPS().start()
+        frame = displayFrame("cur", True)
 
     elif key == ord("x"):
         while True:
@@ -211,7 +218,8 @@ while True:
                 # coordinates, then start the FPS throughput estimator as well
                 tracker.init(frame, initBB)
                 fps = FPS().start()
-                frame = displayFrame("cur")
+
+                frame = displayFrame("cur", True)
 
             elif key2 == ord("q"):
                 exit()
@@ -227,7 +235,7 @@ while True:
                                            showCrosshair=True)
                     tracker.init(frame, initBB)
                     fps = FPS().start()
-                    frame = displayFrame("cur")
+                    frame = displayFrame("cur", True)
 
             elif key2 == ord("y"):
                 i = tracker_pos
@@ -240,7 +248,7 @@ while True:
                                            showCrosshair=True)
                     tracker.init(frame, initBB)
                     fps = FPS().start()
-                    frame = displayFrame("cur")
+                    frame = displayFrame("cur", True)
 
         # if the `q` key was pressed, break from the loop
     elif key == ord("q"):
@@ -263,7 +271,7 @@ while True:
                                    showCrosshair=True)
             tracker.init(frame, initBB)
             fps = FPS().start()
-            frame = displayFrame("cur")
+            frame = displayFrame("cur", True)
 
     elif key == ord("y"):
         i = tracker_pos
@@ -276,7 +284,7 @@ while True:
                                    showCrosshair=True)
             tracker.init(frame, initBB)
             fps = FPS().start()
-            frame = displayFrame("cur")
+            frame = displayFrame("cur", True)
 
     time.sleep(sleepTime)
 

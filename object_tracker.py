@@ -77,22 +77,20 @@ isRecording = True
 sleepTime = int(args["slow"])
 
 
-logging.basicConfig(filename="log.txt", filemode='a',
-                    format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s', datefmt='%H:%M:%S', level=logging.DEBUG)
+logging.basicConfig(filename="log.txt", filemode='a',level=logging.INFO)
 
-logging.info("Logger running..!!")
 
 
 def logFramesData(data={}):
     if data is None:
         return
     else:
-        userFlagStr = ""
-        if data["user"] == 1:
-            userFlagStr = " -u "
-        print("user flag"+userFlagStr)
-        logging.info("Frame#"+str(data['frameNo']) + userFlagStr + "cords=(x="+str(data["cords"]["x"])+",y=" + str(
-            data["cords"]["y"]) + ") fps=" + str(data["fps"]) + " tracker=" + str(data["tracker"]))
+        logging.info({
+            "frame":data['frameNo'] ,  
+            "userFlag":data["user"]  , 
+            "tracker": data["tracker"] , 
+            "initBB":str(data["initBB"])
+        })
 
 
 def displayFrame(flag="next", user=False):
@@ -156,11 +154,7 @@ def displayFrame(flag="next", user=False):
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
             logFramesData({
-                "cords": {
-                    "x": x,
-                    "y": y
-                },
-                "fps": "{:.2f}".format(fps.fps()),
+                "initBB":initBB,
                 "tracker": tracker_name,
                 "frameNo": vs.get(cv2.CAP_PROP_POS_FRAMES) - 1,
                 "user": 1 if user else 0
@@ -219,7 +213,20 @@ while True:
                 tracker.init(frame, initBB)
                 fps = FPS().start()
 
-                frame = displayFrame("cur", True)
+                frame = displayFrame("cur", True)     
+
+            elif key2 == ord("r"):
+                        # select the bounding box of the object we want to track (make
+                    # sure you press ENTER or SPACE after selecting the ROI)
+                initBB = cv2.selectROI("frame", frame, fromCenter=False,
+                                       showCrosshair=True)
+                tracker = OPENCV_OBJECT_TRACKERS[tracker_name]()
+                # start OpenCV object tracker using the supplied bounding box
+                # coordinates, then start the FPS throughput estimator as well
+                tracker.init(frame, initBB)
+                fps = FPS().start()
+
+                frame = displayFrame("cur", True) 
 
             elif key2 == ord("q"):
                 exit()

@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Manrope', sans-serif;
+  color: #16312e;
+  background: #edf2ec;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --ink: #16312e;
+  --muted: #687c75;
+  --paper: #edf2ec;
+  --surface: #f8faf5;
+  --line: #d6e0d8;
+  --deep: #173d37;
+  --teal: #168b7a;
+  --lime: #d4e978;
+  --mono: 'DM Mono', monospace;
+}
+
+* { box-sizing: border-box; }
+html { min-width: 320px; background: var(--paper); }
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+button { font: inherit; }
+::selection { background: #d4e978; color: #173d37; }
+
+.mesh-panel {
+  background-color: #153c36;
+  background-image:
+    radial-gradient(ellipse at 75% 15%, rgba(107, 195, 162, .19), transparent 38%),
+    linear-gradient(rgba(216, 237, 215, .055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(216, 237, 215, .055) 1px, transparent 1px);
+  background-size: auto, 32px 32px, 32px 32px;
+}
+.eyebrow { font: 500 10px/1.4 var(--mono); letter-spacing: .15em; text-transform: uppercase; }
+.mono { font-family: var(--mono); }
+.enter { animation: enter .55s cubic-bezier(.2,.75,.25,1) both; }
+.enter-delay { animation: enter .65s cubic-bezier(.2,.75,.25,1) .12s both; }
+@keyframes enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}

@@ -1,0 +1,38 @@
+from enum import StrEnum
+
+
+class StudyType(StrEnum):
+    VIDEO = "VIDEO"
+    DICOM = "DICOM"
+    NIFTI = "NIFTI"
+    IMAGE = "IMAGE"
+
+
+class StudyModality(StrEnum):
+    ULTRASOUND = "ULTRASOUND"
+    MRI = "MRI"
+    CT = "CT"
+    XRAY = "XRAY"
+    UNKNOWN = "UNKNOWN"
+
+
+class ObservationSource(StrEnum):
+    MANUAL_INITIALIZATION = "MANUAL_INITIALIZATION"
+    AUTO_TRACKED = "AUTO_TRACKED"
+    MANUAL_CORRECTION = "MANUAL_CORRECTION"
+    RETRACKED = "RETRACKED"
+
+
+class JobStatus(StrEnum):
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    CANCELLED = "CANCELLED"
+
+
+class ModelStatus(StrEnum):
+    EXPERIMENTAL = "EXPERIMENTAL"
+    RESEARCH_VALIDATED = "RESEARCH_VALIDATED"
+    EXTERNALLY_VALIDATED = "EXTERNALLY_VALIDATED"
+    REGULATED = "REGULATED"

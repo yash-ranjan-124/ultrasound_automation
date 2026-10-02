@@ -1,0 +1,1 @@
+- [OpenCV runtime](opencv-runtime.md) — Replit’s shared Python package environment can load GUI OpenCV even when the backend declares a headless wheel.

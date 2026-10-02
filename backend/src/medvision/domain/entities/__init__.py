@@ -15,10 +15,17 @@ from medvision.domain.value_objects import BoundingBox
 @dataclass(frozen=True)
 class ImagingStudy:
     id: UUID
-    type: StudyType
+    filename: str
+    study_type: StudyType
     modality: StudyModality
     storage_key: str
     created_at: datetime
+    metadata: dict[str, object]
+
+    @property
+    def type(self) -> StudyType:
+        """Compatibility alias for the original foundation entity contract."""
+        return self.study_type
 
 
 @dataclass(frozen=True)

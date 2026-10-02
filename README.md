@@ -2,9 +2,17 @@
 
 A browser-based foundation for a medical-imaging **research and education** workstation. This project is **not intended for clinical diagnosis**. Model predictions, when implemented in later phases, must be treated as experimental outputs requiring expert review.
 
-## Current phase
+## Current phase: study ingestion
 
-This initial architecture phase provides a FastAPI health endpoint, a React research-workstation overview, independent domain types and ports, and tests. **Study upload, video playback, DICOM/NIfTI viewing, tracking, model execution, persistence, and export are not implemented yet.** The overview marks them as planned rather than simulating results.
+The app supports uploading and registering MP4/AVI videos, NIfTI `.nii`/`.nii.gz` volumes, DICOM `.dcm` files, and PNG/JPG/JPEG images. Uploads require an explicit modality (`ULTRASOUND`, `MRI`, `CT`, `XRAY`, or `UNKNOWN`) and are available through:
+
+- `POST /api/v1/studies` — multipart form fields `file` and `modality`
+- `GET /api/v1/studies` — list studies
+- `GET /api/v1/studies/{study_id}` — fetch one study
+
+Technical metadata is extracted for supported files. DICOM responses use an allowlist of technical fields and omit patient identity fields. Uploaded content is written to local storage under generated study IDs; user-provided filenames are metadata only.
+
+**Study metadata is currently kept in memory and disappears when the API process restarts.** Set `STORAGE_ROOT` to change the local file-storage directory (default: `data/storage` relative to the backend working directory). PostgreSQL persistence, study viewing, tracking, inference, model registry, jobs, and export are not implemented yet. The overview marks workflows as planned and does not simulate results.
 
 ## Run on Replit
 
@@ -24,7 +32,7 @@ cd backend && uv run --locked uvicorn medvision.main:app --host 0.0.0.0 --port 8
 cd frontend && npm run dev -- --host 0.0.0.0 --port 5000
 ```
 
-Check the API with `GET /api/v1/health`. The foundation does not require database credentials to start. PostgreSQL connections and Alembic migrations are deferred until a persistence workflow is implemented.
+Check the API with `GET /api/v1/health`. The app does not require database credentials to start; PostgreSQL connections and Alembic migrations remain deferred.
 
 ## Checks
 

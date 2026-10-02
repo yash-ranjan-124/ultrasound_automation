@@ -11,6 +11,7 @@ dist/
 !.env.example
 uploads/
 exports/
+backend/data/
 .vscode
 .DS_Store
 cv

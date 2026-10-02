@@ -1,4 +1,5 @@
 import { FlaskConical, Hexagon, Microscope, MoveUpRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { ServiceStatus } from '../components/ServiceStatus';
 import { WorkflowCard } from '../features/overview/WorkflowCard';
 
@@ -52,9 +53,14 @@ export default function App() {
               <span className="eyebrow mt-0.5 block text-[8px] text-[#71837b]">Research imaging workstation</span>
             </span>
           </a>
-          <div className="hidden items-center gap-2 sm:flex">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#d0e875]" />
-            <span className="eyebrow text-[#647970]">Foundation build · 01</span>
+          <div className="flex items-center gap-3 sm:gap-5">
+            <Link to="/studies" className="eyebrow rounded-[3px] border border-[#cbd9ce] px-3 py-2 text-[#315e53] transition-colors hover:bg-[#f8faf5]">
+              Browse studies <span aria-hidden="true">↗</span>
+            </Link>
+            <div className="hidden items-center gap-2 sm:flex">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#d0e875]" />
+              <span className="eyebrow text-[#647970]">Foundation build · 01</span>
+            </div>
           </div>
           <span className="mono text-[10px] text-[#71837b] sm:hidden">PHASE 01</span>
         </header>

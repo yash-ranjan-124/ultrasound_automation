@@ -12,27 +12,28 @@ The app supports uploading and registering MP4/AVI videos, NIfTI `.nii`/`.nii.gz
 
 Technical metadata is extracted for supported files. DICOM responses use an allowlist of technical fields and omit patient identity fields. Uploaded content is written to local storage under generated study IDs; user-provided filenames are metadata only.
 
-**Study metadata is currently kept in memory and disappears when the API process restarts.** Set `STORAGE_ROOT` to change the local file-storage directory (default: `data/storage` relative to the backend working directory). PostgreSQL persistence, study viewing, tracking, inference, model registry, jobs, and export are not implemented yet. The overview marks workflows as planned and does not simulate results.
+Study records and extracted metadata are stored in PostgreSQL; uploaded files remain in local storage. Configure `DATABASE_URL` and run `cd backend && uv run --locked --no-sync alembic upgrade head` against the development database before using the study endpoints. On Replit, Publish manages the production schema from the development schema. Set `STORAGE_ROOT` to change the local file-storage directory (default: `data/storage` relative to the backend working directory). Study viewing, tracking, inference, model registry, jobs, and export are not implemented yet. The overview marks workflows as planned and does not simulate results.
 
 ## Run on Replit
 
 The configured workflows start the FastAPI backend on port 8000 and the Vite frontend on port 5000. Open the web preview to view the frontend. Its `/api` requests proxy to the backend.
 
-Manual setup from the repository root:
+Frontend setup from the repository root:
 
 ```sh
-cd backend && uv sync --locked
-cd ../frontend && npm ci
+cd frontend && npm ci
 ```
+
+In Replit, Python dependencies are managed from the project manifests. The Python package environment is shared with the imported root prototype, so use `uv run --locked --no-sync` rather than `uv sync` there; a sync from the backend can remove packages used only by the prototype. Outside Replit, use `uv sync --locked` in an isolated backend environment.
 
 In separate terminals:
 
 ```sh
-cd backend && uv run --locked uvicorn medvision.main:app --host 0.0.0.0 --port 8000
+cd backend && uv run --locked --no-sync uvicorn medvision.main:app --host 0.0.0.0 --port 8000
 cd frontend && npm run dev -- --host 0.0.0.0 --port 5000
 ```
 
-Check the API with `GET /api/v1/health`. The app does not require database credentials to start; PostgreSQL connections and Alembic migrations remain deferred.
+`DATABASE_URL` must point to PostgreSQL. Apply the development migration with `cd backend && uv run --locked --no-sync alembic upgrade head` before using study endpoints. The Replit post-merge setup does this for development; Publish manages the production schema. Check API health at `GET /api/v1/health`.
 
 ## Checks
 

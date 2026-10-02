@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 from PIL import Image
 
 from medvision.config import Settings
+from medvision.infrastructure.persistence import InMemoryStudyRepository
 from medvision.main import create_app
 
 
@@ -16,7 +17,12 @@ def png_bytes() -> bytes:
 
 
 def client_for(tmp_path) -> TestClient:
-    return TestClient(create_app(Settings(storage_root=tmp_path / "storage")))
+    return TestClient(
+        create_app(
+            Settings(storage_root=tmp_path / "storage"),
+            repository=InMemoryStudyRepository(),
+        )
+    )
 
 
 def test_create_list_and_get_image_study(tmp_path) -> None:

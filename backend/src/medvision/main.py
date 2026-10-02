@@ -1,6 +1,11 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy import Engine
+from sqlalchemy.orm import Session, sessionmaker
 from starlette.exceptions import HTTPException
 
 from medvision.api.routers.health import router as health_router
@@ -17,25 +22,47 @@ from medvision.domain.exceptions import (
     StudyNotFoundError,
     UnsupportedStudyTypeError,
 )
+from medvision.domain.ports import StudyRepository
 from medvision.infrastructure.imaging import LocalStudyMetadataReader
-from medvision.infrastructure.persistence import InMemoryStudyRepository
+from medvision.infrastructure.persistence import (
+    SqlAlchemyStudyRepository,
+    create_database_engine,
+)
 from medvision.infrastructure.storage import LocalFileStorageAdapter
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
-    application = FastAPI(
-        title="MedVision AI Lab", description="Research use only; not for clinical diagnosis."
-    )
+def create_app(
+    settings: Settings | None = None,
+    repository: StudyRepository | None = None,
+) -> FastAPI:
     active_settings = settings or Settings()
+    engine: Engine | None = None
+    active_repository = repository
+    if active_repository is None:
+        engine = create_database_engine(active_settings.database_url)
+        active_repository = SqlAlchemyStudyRepository(sessionmaker(engine, class_=Session))
+
+    @asynccontextmanager
+    async def lifespan(_application: FastAPI) -> AsyncIterator[None]:
+        try:
+            yield
+        finally:
+            if engine is not None:
+                engine.dispose()
+
+    application = FastAPI(
+        title="MedVision AI Lab",
+        description="Research use only; not for clinical diagnosis.",
+        lifespan=lifespan,
+    )
     storage = LocalFileStorageAdapter(active_settings.storage_root)
-    repository = InMemoryStudyRepository()
     application.state.create_study_service = CreateStudyService(
         storage=storage,
-        repository=repository,
+        repository=active_repository,
         metadata_reader=LocalStudyMetadataReader(storage),
         resolver=StudyTypeResolver(),
     )
-    application.state.study_catalog_service = StudyCatalogService(repository)
+    application.state.study_catalog_service = StudyCatalogService(active_repository)
     application.include_router(health_router)
     application.include_router(studies_router)
 

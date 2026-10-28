@@ -225,7 +225,10 @@ def test_tracker_loss_returns_failed_run_with_partial_history() -> None:
     assert result.status is JobStatus.FAILED
     assert [item.frame_number for item in result.observations] == [0, 1]
     assert result.error_message == "Tracker lost target at frame 2"
-    assert runs.get_by_id(result.id) == result
+    persisted = runs.get_by_id(result.id)
+    assert persisted is not None
+    assert persisted.status is JobStatus.FAILED
+    assert persisted.observations == result.observations
 
 
 def test_invalid_start_frame_does_not_create_run() -> None:

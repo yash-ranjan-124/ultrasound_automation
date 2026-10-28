@@ -30,21 +30,25 @@ class OpenCVVideoReader:
         self.close()
         suffix = Path(filename).suffix.lower() or ".video"
         working_path: Path | None = None
+        capture: cv2.VideoCapture | None = None
         try:
             with self._storage.open(storage_key) as source:
                 working_path = self._materialize(source, suffix)
 
             capture = cv2.VideoCapture(str(working_path))
             if not capture.isOpened():
-                capture.release()
                 raise VideoReadError("Unable to open stored video")
 
             metadata = self._read_metadata(capture)
             self._capture = capture
             self._working_path = working_path
             self._metadata = metadata
+            capture = None
+            working_path = None
         except Exception:
-            if working_path is not None and working_path != self._working_path:
+            if capture is not None:
+                capture.release()
+            if working_path is not None:
                 working_path.unlink(missing_ok=True)
             raise
 

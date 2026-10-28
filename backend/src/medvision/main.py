@@ -59,7 +59,7 @@ def create_app(
     application.state.create_study_service = CreateStudyService(
         storage=storage,
         repository=active_repository,
-        metadata_reader=LocalStudyMetadataReader(storage),
+        metadata_reader=LocalStudyMetadataReader(),
         resolver=StudyTypeResolver(),
     )
     application.state.study_catalog_service = StudyCatalogService(active_repository)

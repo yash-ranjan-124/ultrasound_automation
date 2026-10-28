@@ -76,11 +76,12 @@ class StartTrackingService:
             raise InvalidTrackingStudyError("Tracking requires a video imaging study")
 
         reader = self.video_readers.create()
-        tracker = self.trackers.create(command.tracker_name)
+        tracker = None
         run: TrackingRun | None = None
         observations: list[FrameObservation] = []
 
         try:
+            tracker = self.trackers.create(command.tracker_name)
             reader.open(study.storage_key, study.filename)
             metadata = reader.get_metadata()
             if command.start_frame < 0 or command.start_frame >= metadata.frame_count:
@@ -156,5 +157,6 @@ class StartTrackingService:
                 self.runs.save(failed)
             raise
         finally:
-            tracker.reset()
+            if tracker is not None:
+                tracker.reset()
             reader.close()

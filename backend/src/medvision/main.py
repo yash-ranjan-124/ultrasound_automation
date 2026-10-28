@@ -41,7 +41,10 @@ from medvision.domain.ports import (
     TrackingSessionRepository,
     VideoReaderFactory,
 )
-from medvision.infrastructure.imaging import LocalStudyMetadataReader, OpenCVVideoReaderFactory
+from medvision.infrastructure.imaging import (
+    LocalStudyMetadataReader,
+    OpenCVVideoReaderFactory,
+)
 from medvision.infrastructure.persistence import (
     InMemoryTrackingRunRepository,
     InMemoryTrackingSessionRepository,
@@ -124,11 +127,19 @@ def create_app(
     async def unsupported_study_error(
         _request: Request, _exc: UnsupportedStudyTypeError
     ) -> JSONResponse:
-        return error_response(400, "UNSUPPORTED_STUDY_TYPE", "The uploaded file type is not supported.")
+        return error_response(
+            400,
+            "UNSUPPORTED_STUDY_TYPE",
+            "The uploaded file type is not supported.",
+        )
 
     @application.exception_handler(StudyNotFoundError)
     async def study_not_found_error(_request: Request, _exc: StudyNotFoundError) -> JSONResponse:
-        return error_response(404, "STUDY_NOT_FOUND", "The requested imaging study does not exist.")
+        return error_response(
+            404,
+            "STUDY_NOT_FOUND",
+            "The requested imaging study does not exist.",
+        )
 
     @application.exception_handler(TrackingSessionNotFoundError)
     async def tracking_session_not_found_error(
@@ -184,7 +195,11 @@ def create_app(
     async def unsupported_tracker_error(
         _request: Request, _exc: UnsupportedTrackerError
     ) -> JSONResponse:
-        return error_response(400, "UNSUPPORTED_TRACKER", "The requested tracker is not supported.")
+        return error_response(
+            400,
+            "UNSUPPORTED_TRACKER",
+            "The requested tracker is not supported.",
+        )
 
     @application.exception_handler(TrackerUnavailableError)
     async def tracker_unavailable_error(
@@ -216,7 +231,11 @@ def create_app(
 
     @application.exception_handler(StorageError)
     async def storage_error(_request: Request, _exc: StorageError) -> JSONResponse:
-        return error_response(500, "STORAGE_ERROR", "Unable to store the uploaded imaging study.")
+        return error_response(
+            500,
+            "STORAGE_ERROR",
+            "Unable to store the uploaded imaging study.",
+        )
 
     @application.exception_handler(HTTPException)
     async def http_error(_request: Request, exc: HTTPException) -> JSONResponse:

@@ -2,7 +2,7 @@
 
 A browser-based foundation for a medical-imaging **research and education** workstation. This project is **not intended for clinical diagnosis**. Model predictions, when implemented in later phases, must be treated as experimental outputs requiring expert review.
 
-## Current phase: study ingestion
+## Current phase: video reader infrastructure
 
 The app supports uploading and registering MP4/AVI videos, NIfTI `.nii`/`.nii.gz` volumes, DICOM `.dcm` files, and PNG/JPG/JPEG images. Uploads require an explicit modality (`ULTRASOUND`, `MRI`, `CT`, `XRAY`, or `UNKNOWN`) and are available through:
 
@@ -12,7 +12,7 @@ The app supports uploading and registering MP4/AVI videos, NIfTI `.nii`/`.nii.gz
 
 Technical metadata is extracted for supported files. DICOM responses use an allowlist of technical fields and omit patient identity fields. Uploaded content is written to local storage under generated study IDs; user-provided filenames are metadata only.
 
-Study records and extracted metadata are stored in PostgreSQL; uploaded files remain in local storage. Configure `DATABASE_URL` and run `cd backend && uv run --locked --no-sync alembic upgrade head` against the development database before using the study endpoints. On Replit, Publish manages the production schema from the development schema. Set `STORAGE_ROOT` to change the local file-storage directory (default: `data/storage` relative to the backend working directory). Study viewing, tracking, inference, model registry, jobs, and export are not implemented yet. The overview marks workflows as planned and does not simulate results.
+Study records and extracted metadata are stored in PostgreSQL; uploaded files remain in local storage. Configure `DATABASE_URL` and run `cd backend && uv run --locked --no-sync alembic upgrade head` against the development database before using the study endpoints. On Replit, Publish manages the production schema from the development schema. Set `STORAGE_ROOT` to change the local file-storage directory (default: `data/storage` relative to the backend working directory).\n\nThe backend now also contains a storage-agnostic `VideoReaderPort` with an OpenCV adapter for video metadata, random frame reads, seeking, sequential iteration, and safe cleanup. This is infrastructure for upcoming tracking phases; browser video playback, ROI selection, CSRT/KCF tracking, inference, model registry, jobs, and export are not implemented yet.
 
 ## Run on Replit
 

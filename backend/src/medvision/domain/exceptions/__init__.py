@@ -36,3 +36,19 @@ class VideoNotOpenError(VideoReadError):
 
 class InvalidVideoFrameError(VideoReadError):
     """Raised when a requested frame number is outside the video bounds."""
+
+
+class TrackerError(MedVisionDomainError):
+    """Base error for object-tracking failures."""
+
+
+class UnsupportedTrackerError(TrackerError):
+    """Raised when the requested tracker name is not registered."""
+
+
+class TrackerInitializationError(TrackerError):
+    """Raised when a tracker cannot initialize from the supplied frame and ROI."""
+
+
+class TrackerNotInitializedError(TrackerError):
+    """Raised when tracking is attempted before initialization."""

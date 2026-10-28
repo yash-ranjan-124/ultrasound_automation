@@ -2,7 +2,7 @@
 
 A browser-based foundation for a medical-imaging **research and education** workstation. This project is **not intended for clinical diagnosis**. Model predictions, when implemented in later phases, must be treated as experimental outputs requiring expert review.
 
-## Current phase: tracking orchestration
+## Current phase: tracking REST API
 
 The app supports uploading and registering MP4/AVI videos, NIfTI `.nii`/`.nii.gz` volumes, DICOM `.dcm` files, and PNG/JPG/JPEG images. Uploads require an explicit modality (`ULTRASOUND`, `MRI`, `CT`, `XRAY`, or `UNKNOWN`) and are available through:
 
@@ -14,7 +14,7 @@ Technical metadata is extracted for supported files. DICOM responses use an allo
 
 Study records and extracted metadata are stored in PostgreSQL; uploaded files remain in local storage. Configure `DATABASE_URL` and run `cd backend && uv run --locked --no-sync alembic upgrade head` against the development database before using the study endpoints. On Replit, Publish manages the production schema from the development schema. Set `STORAGE_ROOT` to change the local file-storage directory (default: `data/storage` relative to the backend working directory).
 
-The backend contains a storage-agnostic `VideoReaderPort`, typed tracker strategies, and OpenCV CSRT/KCF adapters. Phase 6 adds synchronous tracking orchestration: video-only tracking sessions, immutable tracking-run snapshots, normalized frame observations, partial-history preservation on tracker loss, and in-memory tracking repositories for application tests. Tracking REST APIs, PostgreSQL tracking tables, browser playback/ROI selection, background jobs, inference, model registry, and exports are not implemented yet.
+The backend contains storage-agnostic video access, typed CSRT/KCF tracker strategies, and synchronous tracking orchestration. Phase 7 exposes tracking sessions and runs through `/api/v1` REST endpoints with stable validation/error envelopes and real `TrackerRegistry` + `OpenCVVideoReaderFactory` wiring. Tracking sessions and runs are currently in-memory and are lost when the API restarts; PostgreSQL tracking tables, browser playback/ROI selection, background jobs/SSE, inference, model registry, and exports are not implemented yet.
 
 ## Run on Replit
 

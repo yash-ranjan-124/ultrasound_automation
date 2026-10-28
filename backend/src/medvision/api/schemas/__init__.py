@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from medvision.domain.enums import JobStatus, ObservationSource, StudyModality, StudyType
 from medvision.domain.value_objects import BoundingBox
@@ -19,6 +19,8 @@ class StudyResponse(BaseModel):
 
 
 class BoundingBoxSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     x: float = Field(ge=0, le=1)
     y: float = Field(ge=0, le=1)
     width: float = Field(gt=0, le=1)
@@ -33,6 +35,17 @@ class StartTrackingRequest(BaseModel):
     start_frame: int = Field(ge=0)
     initial_bounding_box: BoundingBoxSchema
     initial_source: ObservationSource = ObservationSource.MANUAL_INITIALIZATION
+
+    @field_validator("initial_source")
+    @classmethod
+    def validate_initial_source(cls, value: ObservationSource) -> ObservationSource:
+        allowed = {
+            ObservationSource.MANUAL_INITIALIZATION,
+            ObservationSource.MANUAL_CORRECTION,
+        }
+        if value not in allowed:
+            raise ValueError("Tracking runs must start from a manual observation")
+        return value
 
 
 class TrackingSessionResponse(BaseModel):

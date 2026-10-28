@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import cv2
 
@@ -19,12 +19,12 @@ def _resolve_constructor(name: str) -> TrackerFactory:
     constructor_name = f"Tracker{name}_create"
     constructor = getattr(cv2, constructor_name, None)
     if callable(constructor):
-        return constructor
+        return cast(TrackerFactory, constructor)
 
     legacy = getattr(cv2, "legacy", None)
     legacy_constructor = getattr(legacy, constructor_name, None) if legacy is not None else None
     if callable(legacy_constructor):
-        return legacy_constructor
+        return cast(TrackerFactory, legacy_constructor)
 
     raise TrackerUnavailableError(
         f"OpenCV tracker {name} is unavailable in the installed OpenCV build"

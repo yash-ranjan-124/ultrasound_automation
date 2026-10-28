@@ -19,7 +19,11 @@ class InMemoryStudyRepository:
 
     def list(self) -> list[ImagingStudy]:
         with self._lock:
-            return sorted(self._studies.values(), key=lambda study: study.created_at, reverse=True)
+            return sorted(
+                self._studies.values(),
+                key=lambda study: study.created_at,
+                reverse=True,
+            )
 
     def delete(self, study_id: UUID) -> None:
         with self._lock:

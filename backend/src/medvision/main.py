@@ -21,6 +21,7 @@ from medvision.application.services import (
 )
 from medvision.config import Settings
 from medvision.domain.exceptions import (
+    InvalidBoundingBoxError,
     InvalidTrackingStartError,
     InvalidTrackingStudyError,
     MetadataExtractionError,
@@ -104,6 +105,7 @@ def create_app(
         trackers=trackers,
     )
     application.state.tracking_catalog_service = TrackingCatalogService(
+        studies=active_repository,
         sessions=session_repository,
         runs=run_repository,
     )
@@ -146,6 +148,16 @@ def create_app(
             404,
             "TRACKING_RUN_NOT_FOUND",
             "The requested tracking run does not exist.",
+        )
+
+    @application.exception_handler(InvalidBoundingBoxError)
+    async def invalid_bounding_box_error(
+        _request: Request, _exc: InvalidBoundingBoxError
+    ) -> JSONResponse:
+        return error_response(
+            400,
+            "INVALID_BOUNDING_BOX",
+            "The supplied bounding box is outside normalized image bounds.",
         )
 
     @application.exception_handler(InvalidTrackingStudyError)

@@ -46,6 +46,10 @@ class UnsupportedTrackerError(TrackerError):
     """Raised when the requested tracker name is not registered."""
 
 
+class TrackerUnavailableError(TrackerError):
+    """Raised when a requested tracker is unavailable in the OpenCV build."""
+
+
 class TrackerInitializationError(TrackerError):
     """Raised when a tracker cannot initialize from the supplied frame and ROI."""
 

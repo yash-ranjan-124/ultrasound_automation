@@ -14,6 +14,10 @@ class StudyNotFoundError(MedVisionDomainError):
         self.study_id = study_id
 
 
+class InvalidBoundingBoxError(MedVisionDomainError):
+    """Raised when normalized bounding-box coordinates are invalid."""
+
+
 class StorageError(MedVisionDomainError):
     """Raised when an uploaded source cannot be safely stored."""
 

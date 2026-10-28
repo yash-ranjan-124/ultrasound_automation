@@ -1,8 +1,10 @@
+from collections.abc import Iterator
 from typing import BinaryIO, Protocol
 from uuid import UUID
 
 from medvision.domain.entities import ImagingStudy, ModelManifest
 from medvision.domain.enums import StudyType
+from medvision.domain.value_objects import VideoFrame, VideoMetadata
 
 
 class StoragePort(Protocol):
@@ -32,6 +34,18 @@ class StudyMetadataReader(Protocol):
         content: BinaryIO,
         filename: str,
     ) -> dict[str, object]: ...
+
+
+class VideoReaderPort(Protocol):
+    def open(self, storage_key: str, filename: str) -> None: ...
+
+    def get_metadata(self) -> VideoMetadata: ...
+
+    def read_frame(self, frame_number: int) -> VideoFrame: ...
+
+    def iter_frames(self, start_frame: int = 0) -> Iterator[VideoFrame]: ...
+
+    def close(self) -> None: ...
 
 
 class MedicalImagingModel(Protocol):

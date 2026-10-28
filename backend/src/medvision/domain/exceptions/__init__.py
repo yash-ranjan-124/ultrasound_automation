@@ -24,3 +24,15 @@ class StorageError(MedVisionDomainError):
 
 class MetadataExtractionError(MedVisionDomainError):
     """Raised when a supported file cannot be read as its declared type."""
+
+
+class VideoReadError(MedVisionDomainError):
+    """Raised when a stored video cannot be opened or decoded reliably."""
+
+
+class VideoNotOpenError(VideoReadError):
+    """Raised when video operations are attempted before opening a source."""
+
+
+class InvalidVideoFrameError(VideoReadError):
+    """Raised when a requested frame number is outside the video bounds."""

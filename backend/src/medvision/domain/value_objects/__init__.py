@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from math import isfinite
+from typing import Any
 
 from medvision.domain.exceptions import InvalidBoundingBoxError
 
@@ -53,3 +54,36 @@ class BoundingBox:
             round(self.width * frame_width),
             round(self.height * frame_height),
         )
+
+
+@dataclass(frozen=True)
+class VideoMetadata:
+    width: int
+    height: int
+    fps: float
+    frame_count: int
+    duration_seconds: float
+
+    def __post_init__(self) -> None:
+        if self.width <= 0 or self.height <= 0:
+            raise ValueError("Video dimensions must be positive")
+        if self.fps <= 0 or not isfinite(self.fps):
+            raise ValueError("Video FPS must be finite and positive")
+        if self.frame_count <= 0:
+            raise ValueError("Video frame count must be positive")
+        if self.duration_seconds <= 0 or not isfinite(self.duration_seconds):
+            raise ValueError("Video duration must be finite and positive")
+
+
+@dataclass(frozen=True)
+class VideoFrame:
+    frame_number: int
+    width: int
+    height: int
+    pixels: Any
+
+    def __post_init__(self) -> None:
+        if self.frame_number < 0:
+            raise ValueError("Frame number cannot be negative")
+        if self.width <= 0 or self.height <= 0:
+            raise ValueError("Frame dimensions must be positive")

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from contextlib import suppress
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
@@ -23,6 +24,7 @@ from medvision.domain.exceptions import (
     TrackingSessionNotFoundError,
 )
 from medvision.domain.ports import (
+    ObjectTracker,
     StudyRepository,
     TrackerFactory,
     TrackingRunRepository,
@@ -76,7 +78,7 @@ class StartTrackingService:
             raise InvalidTrackingStudyError("Tracking requires a video imaging study")
 
         reader = self.video_readers.create()
-        tracker = None
+        tracker: ObjectTracker | None = None
         run: TrackingRun | None = None
         observations: list[FrameObservation] = []
 
@@ -158,5 +160,7 @@ class StartTrackingService:
             raise
         finally:
             if tracker is not None:
-                tracker.reset()
-            reader.close()
+                with suppress(Exception):
+                    tracker.reset()
+            with suppress(Exception):
+                reader.close()

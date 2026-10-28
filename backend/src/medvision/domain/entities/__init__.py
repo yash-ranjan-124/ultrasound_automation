@@ -54,9 +54,19 @@ class TrackingSession:
 class TrackingRun:
     id: UUID
     session_id: UUID
-    algorithm: str
+    tracker_name: str
+    start_frame: int
+    status: JobStatus
     observations: tuple[FrameObservation, ...]
     created_at: datetime
+    completed_at: datetime | None = None
+    error_message: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.start_frame < 0:
+            raise ValueError("Tracking start frame cannot be negative")
+        if not self.tracker_name.strip():
+            raise ValueError("Tracker name cannot be empty")
 
 
 @dataclass(frozen=True)

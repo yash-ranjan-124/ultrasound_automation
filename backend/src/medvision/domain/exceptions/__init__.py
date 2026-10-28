@@ -14,6 +14,20 @@ class StudyNotFoundError(MedVisionDomainError):
         self.study_id = study_id
 
 
+class TrackingSessionNotFoundError(MedVisionDomainError):
+    def __init__(self, session_id: object) -> None:
+        super().__init__(f"Tracking session not found: {session_id}")
+        self.session_id = session_id
+
+
+class InvalidTrackingStudyError(MedVisionDomainError):
+    """Raised when tracking is requested for a non-video study."""
+
+
+class InvalidTrackingStartError(MedVisionDomainError):
+    """Raised when the requested start frame is invalid for the video."""
+
+
 class InvalidBoundingBoxError(MedVisionDomainError):
     """Raised when normalized bounding-box coordinates are invalid."""
 

@@ -13,6 +13,7 @@ from medvision.domain.entities import (
 )
 from medvision.domain.enums import (
     AITaskType,
+    JobStatus,
     ModelStatus,
     ObservationSource,
     StudyModality,
@@ -56,11 +57,20 @@ def test_tracking_history_is_immutable_and_scoped_to_session() -> None:
     observation = FrameObservation(
         0, BoundingBox(0, 0, 1, 1), ObservationSource.MANUAL_INITIALIZATION
     )
-    run = TrackingRun(uuid4(), session.id, "CSRT", (observation,), now)
+    run = TrackingRun(
+        id=uuid4(),
+        session_id=session.id,
+        tracker_name="CSRT",
+        start_frame=0,
+        status=JobStatus.COMPLETED,
+        observations=(observation,),
+        created_at=now,
+        completed_at=now,
+    )
 
     assert run.session_id == session.id
     with pytest.raises(FrozenInstanceError):
-        run.algorithm = "KCF"  # type: ignore[misc]
+        run.tracker_name = "KCF"  # type: ignore[misc]
 
 
 def test_ai_use_case_models_modality_and_task_explicitly() -> None:

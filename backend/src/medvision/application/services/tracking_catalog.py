@@ -2,12 +2,21 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from medvision.application.dto import TrackingRunDTO, TrackingSessionDTO
-from medvision.domain.exceptions import TrackingRunNotFoundError, TrackingSessionNotFoundError
-from medvision.domain.ports import TrackingRunRepository, TrackingSessionRepository
+from medvision.domain.exceptions import (
+    StudyNotFoundError,
+    TrackingRunNotFoundError,
+    TrackingSessionNotFoundError,
+)
+from medvision.domain.ports import (
+    StudyRepository,
+    TrackingRunRepository,
+    TrackingSessionRepository,
+)
 
 
 @dataclass
 class TrackingCatalogService:
+    studies: StudyRepository
     sessions: TrackingSessionRepository
     runs: TrackingRunRepository
 
@@ -18,6 +27,8 @@ class TrackingCatalogService:
         return TrackingSessionDTO.from_entity(session)
 
     def list_sessions(self, study_id: UUID) -> list[TrackingSessionDTO]:
+        if self.studies.get_by_id(study_id) is None:
+            raise StudyNotFoundError(study_id)
         return [
             TrackingSessionDTO.from_entity(session)
             for session in self.sessions.list_by_study(study_id)

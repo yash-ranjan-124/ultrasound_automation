@@ -43,6 +43,7 @@ class _OpenCVTracker:
         return self.tracker_name
 
     def initialize(self, frame: VideoFrame, bounding_box: BoundingBox) -> None:
+        self._tracker = None
         tracker = self._create_tracker()
         pixel_box = bounding_box.to_pixels(frame.width, frame.height)
 

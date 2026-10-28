@@ -87,3 +87,18 @@ class VideoFrame:
             raise ValueError("Frame number cannot be negative")
         if self.width <= 0 or self.height <= 0:
             raise ValueError("Frame dimensions must be positive")
+
+
+@dataclass(frozen=True)
+class TrackingResult:
+    success: bool
+    bounding_box: BoundingBox | None
+    confidence: float | None = None
+
+    def __post_init__(self) -> None:
+        if self.success and self.bounding_box is None:
+            raise ValueError("Successful tracking result requires a bounding box")
+        if not self.success and self.bounding_box is not None:
+            raise ValueError("Failed tracking result must not include a bounding box")
+        if self.confidence is not None and not 0 <= self.confidence <= 1:
+            raise ValueError("Tracking confidence must be between zero and one")

@@ -20,6 +20,12 @@ class TrackingSessionNotFoundError(MedVisionDomainError):
         self.session_id = session_id
 
 
+class TrackingRunNotFoundError(MedVisionDomainError):
+    def __init__(self, run_id: object) -> None:
+        super().__init__(f"Tracking run not found: {run_id}")
+        self.run_id = run_id
+
+
 class InvalidTrackingStudyError(MedVisionDomainError):
     """Raised when tracking is requested for a non-video study."""
 

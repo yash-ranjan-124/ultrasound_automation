@@ -2,9 +2,19 @@ from collections.abc import Iterator
 from typing import BinaryIO, Protocol
 from uuid import UUID
 
-from medvision.domain.entities import ImagingStudy, ModelManifest
+from medvision.domain.entities import (
+    ImagingStudy,
+    ModelManifest,
+    TrackingRun,
+    TrackingSession,
+)
 from medvision.domain.enums import StudyType
-from medvision.domain.value_objects import VideoFrame, VideoMetadata
+from medvision.domain.value_objects import (
+    BoundingBox,
+    TrackingResult,
+    VideoFrame,
+    VideoMetadata,
+)
 
 
 class StoragePort(Protocol):
@@ -25,6 +35,22 @@ class StudyRepository(Protocol):
     def list(self) -> list[ImagingStudy]: ...
 
     def delete(self, study_id: UUID) -> None: ...
+
+
+class TrackingSessionRepository(Protocol):
+    def save(self, session: TrackingSession) -> None: ...
+
+    def get_by_id(self, session_id: UUID) -> TrackingSession | None: ...
+
+    def list_by_study(self, study_id: UUID) -> list[TrackingSession]: ...
+
+
+class TrackingRunRepository(Protocol):
+    def save(self, run: TrackingRun) -> None: ...
+
+    def get_by_id(self, run_id: UUID) -> TrackingRun | None: ...
+
+    def list_by_session(self, session_id: UUID) -> list[TrackingRun]: ...
 
 
 class StudyMetadataReader(Protocol):
@@ -48,6 +74,10 @@ class VideoReaderPort(Protocol):
     def close(self) -> None: ...
 
 
+class VideoReaderFactory(Protocol):
+    def create(self) -> VideoReaderPort: ...
+
+
 class MedicalImagingModel(Protocol):
     @property
     def metadata(self) -> ModelManifest: ...
@@ -62,8 +92,15 @@ class MedicalImagingModel(Protocol):
 
 
 class ObjectTracker(Protocol):
-    def initialize(self, frame: object, bounding_box: object) -> None: ...
+    @property
+    def name(self) -> str: ...
 
-    def track(self, frame: object) -> object: ...
+    def initialize(self, frame: VideoFrame, bounding_box: BoundingBox) -> None: ...
+
+    def track(self, frame: VideoFrame) -> TrackingResult: ...
 
     def reset(self) -> None: ...
+
+
+class TrackerFactory(Protocol):
+    def create(self, name: str) -> ObjectTracker: ...

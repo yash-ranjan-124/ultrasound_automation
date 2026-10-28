@@ -11,16 +11,13 @@ TrackerBuilder = Callable[[], ObjectTracker]
 
 class TrackerRegistry:
     def __init__(self, builders: dict[str, TrackerBuilder] | None = None) -> None:
+        default_builders: dict[str, TrackerBuilder] = {
+            "CSRT": OpenCVCSRTTracker,
+            "KCF": OpenCVKCFTracker,
+        }
+        selected_builders = builders if builders is not None else default_builders
         self._builders = {
-            name.upper(): builder
-            for name, builder in (
-                builders
-                if builders is not None
-                else {
-                    "CSRT": OpenCVCSRTTracker,
-                    "KCF": OpenCVKCFTracker,
-                }
-            ).items()
+            name.strip().upper(): builder for name, builder in selected_builders.items()
         }
 
     def supported_names(self) -> tuple[str, ...]:

@@ -209,4 +209,40 @@ def test_tracking_api_validates_bounding_box_shape(tmp_path) -> None:
         },
     )
 
-    assert response.status_code in {400, 422}
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "INVALID_BOUNDING_BOX"
+
+
+def test_tracking_api_rejects_forged_auto_observation_source(tmp_path) -> None:
+    client, studies = make_client(tmp_path)
+    study = add_video(studies)
+    session = client.post(
+        f"/api/v1/studies/{study.id}/tracking-sessions"
+    ).json()
+
+    response = client.post(
+        f"/api/v1/tracking-sessions/{session['id']}/runs",
+        json={
+            "tracker_name": "FAKE",
+            "start_frame": 0,
+            "initial_source": "AUTO_TRACKED",
+            "initial_bounding_box": {
+                "x": 0.1,
+                "y": 0.1,
+                "width": 0.2,
+                "height": 0.2,
+            },
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "INVALID_REQUEST"
+
+
+def test_tracking_session_list_rejects_unknown_study(tmp_path) -> None:
+    client, _ = make_client(tmp_path)
+
+    response = client.get(f"/api/v1/studies/{uuid4()}/tracking-sessions")
+
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "STUDY_NOT_FOUND"

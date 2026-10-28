@@ -66,7 +66,7 @@ class CreateStudyService:
             f"studies/{study_id}/source{self.resolver.storage_suffix(filename, study_type)}"
         )
         stored = False
-        persisted = False
+        persistence_attempted = False
         try:
             self.storage.save(storage_key, command.content)
             stored = True
@@ -85,11 +85,11 @@ class CreateStudyService:
                 created_at=self.clock(),
                 metadata=metadata,
             )
+            persistence_attempted = True
             self.repository.save(study)
-            persisted = True
             return StudyDTO.from_entity(study)
         except Exception:
-            if persisted:
+            if persistence_attempted:
                 with suppress(Exception):
                     self.repository.delete(study_id)
             if stored:

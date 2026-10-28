@@ -4,7 +4,12 @@ from uuid import UUID
 
 from medvision.domain.entities import ImagingStudy, ModelManifest
 from medvision.domain.enums import StudyType
-from medvision.domain.value_objects import VideoFrame, VideoMetadata
+from medvision.domain.value_objects import (
+    BoundingBox,
+    TrackingResult,
+    VideoFrame,
+    VideoMetadata,
+)
 
 
 class StoragePort(Protocol):
@@ -62,8 +67,11 @@ class MedicalImagingModel(Protocol):
 
 
 class ObjectTracker(Protocol):
-    def initialize(self, frame: object, bounding_box: object) -> None: ...
+    @property
+    def name(self) -> str: ...
 
-    def track(self, frame: object) -> object: ...
+    def initialize(self, frame: VideoFrame, bounding_box: BoundingBox) -> None: ...
+
+    def track(self, frame: VideoFrame) -> TrackingResult: ...
 
     def reset(self) -> None: ...

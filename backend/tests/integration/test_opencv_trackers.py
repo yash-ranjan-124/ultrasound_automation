@@ -107,7 +107,9 @@ def test_tracker_clips_out_of_frame_opencv_box_to_normalized_domain() -> None:
 
 
 @pytest.mark.parametrize("tracker_type", [OpenCVCSRTTracker, OpenCVKCFTracker])
-def test_real_opencv_tracker_smoke_on_static_high_contrast_object(\n    tracker_type,\n) -> None:
+def test_real_opencv_tracker_smoke_on_static_high_contrast_object(
+    tracker_type,
+) -> None:
     frame = make_frame()
     tracker = tracker_type()
     tracker.initialize(frame, BoundingBox(0.1, 0.1, 0.2, 0.3))

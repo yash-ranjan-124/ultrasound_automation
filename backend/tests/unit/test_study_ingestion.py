@@ -1,10 +1,12 @@
 from io import BytesIO
+from typing import BinaryIO
 from uuid import UUID, uuid4
 
 import pytest
 
 from medvision.application.commands import CreateStudyCommand
 from medvision.application.services import CreateStudyService, StudyTypeResolver
+from medvision.domain.entities import ImagingStudy
 from medvision.domain.enums import StudyModality, StudyType
 from medvision.domain.exceptions import MetadataExtractionError, UnsupportedStudyTypeError
 from medvision.infrastructure.persistence import InMemoryStudyRepository
@@ -42,13 +44,13 @@ class FakeStorage:
         self.deleted: list[str] = []
         self.fail = False
 
-    def save(self, key: str, content: BytesIO) -> None:
+    def save(self, key: str, content: BinaryIO) -> None:
         if self.fail:
             raise OSError("storage unavailable")
         content.seek(0)
         self.files[key] = content.read()
 
-    def open(self, key: str) -> BytesIO:
+    def open(self, key: str) -> BinaryIO:
         return BytesIO(self.files[key])
 
     def delete(self, key: str) -> None:
@@ -64,12 +66,27 @@ class FakeMetadataReader:
         self.result: dict[str, object] = {"width": 10, "height": 8}
         self.fail = False
         self.seen_type: StudyType | None = None
+        self.seen_filename: str | None = None
+        self.seen_content: bytes | None = None
 
-    def extract(self, study_type: StudyType, _storage_key: str) -> dict[str, object]:
+    def extract(
+        self,
+        study_type: StudyType,
+        content: BinaryIO,
+        filename: str,
+    ) -> dict[str, object]:
         self.seen_type = study_type
+        self.seen_filename = filename
+        self.seen_content = content.read()
         if self.fail:
             raise MetadataExtractionError("invalid study")
         return self.result
+
+
+class PersistThenFailRepository(InMemoryStudyRepository):
+    def save(self, study: ImagingStudy) -> None:
+        super().save(study)
+        raise RuntimeError("simulated failure after persistence")
 
 
 def make_service() -> tuple[
@@ -98,6 +115,8 @@ def test_create_study_registers_metadata_and_keeps_user_filename_out_of_storage_
     assert study.modality is StudyModality.MRI
     assert study.metadata == {"width": 10, "height": 8}
     assert metadata.seen_type is StudyType.IMAGE
+    assert metadata.seen_filename == "passwd.png"
+    assert metadata.seen_content == b"synthetic image"
     storage_key = f"studies/{study.id}/source.png"
     assert list(storage.files) == [storage_key]
     assert ".." not in storage_key
@@ -156,6 +175,26 @@ def test_metadata_failure_compensates_by_deleting_uploaded_file() -> None:
     assert len(storage.deleted) == 1
     assert storage.files == {}
     assert repository.list() == []
+
+
+def test_repository_failure_compensates_database_and_storage() -> None:
+    storage = FakeStorage()
+    repository = PersistThenFailRepository()
+    service = CreateStudyService(
+        storage,
+        repository,
+        FakeMetadataReader(),
+        StudyTypeResolver(),
+    )
+
+    with pytest.raises(RuntimeError, match="simulated failure"):
+        service.execute(
+            CreateStudyCommand("image.png", StudyModality.UNKNOWN, None, BytesIO(b"data"))
+        )
+
+    assert repository.list() == []
+    assert storage.files == {}
+    assert len(storage.deleted) == 1
 
 
 def test_in_memory_repository_get_list_delete() -> None:

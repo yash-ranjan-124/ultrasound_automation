@@ -26,7 +26,12 @@ class StudyRepository(Protocol):
 
 
 class StudyMetadataReader(Protocol):
-    def extract(self, study_type: StudyType, storage_key: str) -> dict[str, object]: ...
+    def extract(
+        self,
+        study_type: StudyType,
+        content: BinaryIO,
+        filename: str,
+    ) -> dict[str, object]: ...
 
 
 class MedicalImagingModel(Protocol):

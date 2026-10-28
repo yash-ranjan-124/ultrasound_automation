@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from contextlib import suppress
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import PurePosixPath
@@ -65,10 +66,16 @@ class CreateStudyService:
             f"studies/{study_id}/source{self.resolver.storage_suffix(filename, study_type)}"
         )
         stored = False
+        persistence_attempted = False
         try:
             self.storage.save(storage_key, command.content)
             stored = True
-            metadata = self.metadata_reader.extract(study_type, storage_key)
+            with self.storage.open(storage_key) as stored_content:
+                metadata = self.metadata_reader.extract(
+                    study_type,
+                    stored_content,
+                    filename,
+                )
             study = ImagingStudy(
                 id=study_id,
                 filename=filename,
@@ -78,9 +85,14 @@ class CreateStudyService:
                 created_at=self.clock(),
                 metadata=metadata,
             )
+            persistence_attempted = True
             self.repository.save(study)
             return StudyDTO.from_entity(study)
         except Exception:
+            if persistence_attempted:
+                with suppress(Exception):
+                    self.repository.delete(study_id)
             if stored:
-                self.storage.delete(storage_key)
+                with suppress(Exception):
+                    self.storage.delete(storage_key)
             raise

@@ -3,6 +3,7 @@ from datetime import datetime
 from uuid import UUID
 
 from medvision.domain.enums import (
+    AITaskType,
     JobStatus,
     ModelStatus,
     ObservationSource,
@@ -43,12 +44,30 @@ class FrameObservation:
 
 
 @dataclass(frozen=True)
-class TrackingRun:
+class TrackingSession:
     id: UUID
     study_id: UUID
+    created_at: datetime
+
+
+@dataclass(frozen=True)
+class TrackingRun:
+    id: UUID
+    session_id: UUID
     algorithm: str
     observations: tuple[FrameObservation, ...]
     created_at: datetime
+
+
+@dataclass(frozen=True)
+class AIUseCase:
+    id: str
+    name: str
+    task_type: AITaskType
+    supported_modalities: tuple[StudyModality, ...]
+    anatomy: str
+    description: str
+    intended_use: str
 
 
 @dataclass(frozen=True)

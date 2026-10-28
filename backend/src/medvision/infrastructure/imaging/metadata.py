@@ -1,6 +1,8 @@
 import re
 from pathlib import Path
-from typing import Any, Protocol, cast
+from shutil import copyfileobj
+from tempfile import NamedTemporaryFile
+from typing import Any, BinaryIO, Protocol, cast
 
 import cv2
 import nibabel as nib
@@ -9,7 +11,6 @@ from PIL import Image
 
 from medvision.domain.enums import StudyType
 from medvision.domain.exceptions import MetadataExtractionError
-from medvision.infrastructure.storage import LocalFileStorageAdapter
 
 
 class _NiftiHeader(Protocol):
@@ -22,25 +23,49 @@ class _NiftiVolume(Protocol):
 
 
 class LocalStudyMetadataReader:
-    def __init__(self, storage: LocalFileStorageAdapter) -> None:
-        self._storage = storage
+    """Extract metadata from a storage-agnostic binary stream.
 
-    def extract(self, study_type: StudyType, storage_key: str) -> dict[str, object]:
-        path = self._storage.resolve_path(storage_key)
+    Some imaging libraries require a filesystem path, so the adapter materializes
+    a short-lived local working copy. The caller remains coupled only to StoragePort.
+    """
+
+    def extract(
+        self,
+        study_type: StudyType,
+        content: BinaryIO,
+        filename: str,
+    ) -> dict[str, object]:
+        suffix = self._suffix_for(filename)
+        temporary_path: Path | None = None
         try:
+            with NamedTemporaryFile(suffix=suffix, delete=False) as temporary:
+                temporary_path = Path(temporary.name)
+                copyfileobj(content, temporary)
+                temporary.flush()
+
             if study_type is StudyType.VIDEO:
-                return self._video_metadata(path)
+                return self._video_metadata(temporary_path)
             if study_type is StudyType.IMAGE:
-                return self._image_metadata(path)
+                return self._image_metadata(temporary_path)
             if study_type is StudyType.NIFTI:
-                return self._nifti_metadata(path)
+                return self._nifti_metadata(temporary_path)
             if study_type is StudyType.DICOM:
-                return self._dicom_metadata(path)
+                return self._dicom_metadata(temporary_path)
         except MetadataExtractionError:
             raise
         except Exception as exc:
             raise MetadataExtractionError("Unable to read supported imaging file") from exc
+        finally:
+            if temporary_path is not None:
+                temporary_path.unlink(missing_ok=True)
         raise MetadataExtractionError("Unsupported imaging study type")
+
+    @staticmethod
+    def _suffix_for(filename: str) -> str:
+        lowered = filename.lower()
+        if lowered.endswith(".nii.gz"):
+            return ".nii.gz"
+        return Path(filename).suffix.lower()
 
     @staticmethod
     def _video_metadata(path: Path) -> dict[str, object]:
